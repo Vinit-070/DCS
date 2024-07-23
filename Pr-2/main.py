@@ -1,22 +1,29 @@
-from multiprocessing import Queue
-import sys
+import multiprocessing
+import time
 
 def sender(queue):
-  message = "Hello from Sender!"
-  queue.put(message)
-  print(f"Sent message: {message}")
+    messages = ["Hello", "World"]
+    for message in messages:
+        print(f"Sending: {message}")
+        queue.put(message)
+        time.sleep(1)
+    queue.put("END")
 
 def receiver(queue):
-  # Get message from the queue
-  message = queue.get()
-  print(f"Received message: {message}")
+    while True:
+        message = queue.get()
+        if message == "END":
+            break
+        print(f"Received: {message}")
 
 if __name__ == "__main__":
-  # Create a queue for message passing
-  queue = Queue()
+    queue = multiprocessing.Queue()
 
-  # Choose between sender or receiver behavior
-  if len(sys.argv) > 1 and sys.argv[1] == "sender":
-    sender(queue)
-  else:
-    receiver(queue)
+    sender_process = multiprocessing.Process(target=sender, args=(queue,))
+    receiver_process = multiprocessing.Process(target=receiver, args=(queue,))
+
+    sender_process.start()
+    receiver_process.start()
+
+    sender_process.join()
+    receiver_process.join()
